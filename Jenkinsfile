@@ -10,8 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: "${env.GITHUB_REPO}"
+                git branch: 'main', url: "${env.GITHUB_REPO}"
             }
         }
 
@@ -49,10 +48,20 @@ pipeline {
             cleanWs()
         }
         success {
-            echo "Build #${env.BUILD_NUMBER} succeeded!"
+            echo "✅ Build #${env.BUILD_NUMBER} succeeded!"
         }
         failure {
-            echo "Build #${env.BUILD_NUMBER} failed!"
+            sh """
+                echo ""
+                echo "════════════════════════════════════════════════════════"
+                echo "🤖  AI BUILD ERROR ANALYZER - Running..."
+                echo "════════════════════════════════════════════════════════"
+                BUILD_NUMBER=${env.BUILD_NUMBER} \
+                JOB_NAME=sample-pipeline \
+                CLAUDE_API_KEY=${env.CLAUDE_API_KEY} \
+                node /var/jenkins_home/workspace/sample-pipeline/scripts/analyze-build-error.js 2>&1 || \
+                echo "⚠️  Set CLAUDE_API_KEY in Jenkins to enable AI suggestions"
+            """
         }
     }
 }
