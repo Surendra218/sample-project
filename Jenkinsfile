@@ -11,6 +11,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: "${env.GITHUB_REPO}"
+                // Copy analyzer to persistent location so cleanWs doesn't delete it
+                sh 'cp scripts/analyze-build-error.js /var/jenkins_home/analyze-build-error.js'
             }
         }
 
@@ -59,8 +61,8 @@ pipeline {
                 BUILD_NUMBER=${env.BUILD_NUMBER} \
                 JOB_NAME=sample-pipeline \
                 CLAUDE_API_KEY=${env.CLAUDE_API_KEY} \
-                node /var/jenkins_home/workspace/sample-pipeline/scripts/analyze-build-error.js 2>&1 || \
-                echo "⚠️  Set CLAUDE_API_KEY in Jenkins to enable AI suggestions"
+                node /var/jenkins_home/analyze-build-error.js 2>&1 || \
+                echo "⚠️  AI analysis failed"
             """
         }
     }
