@@ -1,18 +1,23 @@
 pipeline {
     agent any
 
+    environment {
+        GITHUB_REPO = 'https://github.com/Surendra218/sample-project.git'
+        DOCKER_IMAGE = 'sample-project'
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'mian',  // BUG: typo 'mian' instead of 'main'
-                    url: 'https://github.com/your-org/sample-project.git'
+                git branch: 'main',
+                    url: "${env.GITHUB_REPO}"
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                // BUG: missing 'sh' keyword
-                'npm install'
+                sh 'npm install'
             }
         }
 
@@ -24,32 +29,30 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t sample-project .'
-                // BUG: missing docker push step
+                sh "docker build -t ${env.DOCKER_IMAGE}:${env.DOCKER_TAG} ."
+                sh "docker tag ${env.DOCKER_IMAGE}:${env.DOCKER_TAG} ${env.DOCKER_IMAGE}:latest"
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    docker stop sample-project || true
-                    docker rm sample-project || true
-                    // BUG: wrong port mapping (app is on 3000, not 8080)
-                    docker run -d --name sample-project -p 80:8080 sample-project
-                '''
+                sh "docker stop ${env.DOCKER_IMAGE} || true"
+                sh "docker rm ${env.DOCKER_IMAGE} || true"
+                sh "docker run -d --name ${env.DOCKER_IMAGE} -p 3000:3000 ${env.DOCKER_IMAGE}:latest"
+                echo "App deployed at http://localhost:3000"
             }
         }
     }
 
     post {
         always {
-            // BUG: invalid cleanup step syntax
-            cleanupWorkspace()
+            cleanWs()
+        }
+        success {
+            echo "Build #${env.BUILD_NUMBER} succeeded!"
         }
         failure {
-            mail to: 'team@example.com'
-                subject: "Build Failed: ${env.JOB_NAME}"  // BUG: missing comma
-                body: "Check Jenkins for details."
+            echo "Build #${env.BUILD_NUMBER} failed!"
         }
     }
 }

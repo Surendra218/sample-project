@@ -1,6 +1,6 @@
-const express = requrie('express');  // typo: 'requrie' instead of 'require'
+const express = require('express');
 const axios = require('axios');
-const _ = require('lodash')
+const _ = require('lodash');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,21 +11,14 @@ app.get('/', (req, res) => {
 
 app.get('/users', async (req, res) => {
   const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-  const users = _.map(response.data, user => {
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email
-    };
-  });
-  res.json(users)  // missing semicolon
-});
-
-app.get('/error', (req, res) => {
-  const result = undefinedVariable + 1;  // ReferenceError: undefinedVariable is not defined
-  res.send(result);
+  const users = _.map(response.data, user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email
+  }));
+  res.json(users);
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`
-);  // mismatched parenthesis
+  console.log(`Server running on port ${PORT}`);
+});

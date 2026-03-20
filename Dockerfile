@@ -1,19 +1,13 @@
-# Dockerfile with intentional issues
-
-FROM node:14-alpine
+FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
-# BUG: copying package.json but missing package-lock.json
 COPY package.json .
 
 RUN npm install --production
 
-# BUG: should be COPY . . to copy all source files
-COPY src/ .
+COPY src/ ./src/
 
-# BUG: wrong port exposed (app runs on 3000, but exposing 8080)
-EXPOSE 8080
+EXPOSE 3000
 
-# BUG: incorrect start command path
-CMD ["node", "index.js"]
+CMD ["node", "src/index.js"]
