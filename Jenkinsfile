@@ -11,8 +11,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: "${env.GITHUB_REPO}"
-                // Copy analyzer to persistent location so cleanWs doesn't delete it
-                sh 'cp scripts/analyze-build-error.js /var/jenkins_home/analyze-build-error.js'
             }
         }
 
@@ -50,19 +48,14 @@ pipeline {
             cleanWs()
         }
         success {
-            echo "✅ Build #${env.BUILD_NUMBER} succeeded!"
+            echo "Build #${env.BUILD_NUMBER} succeeded!"
         }
         failure {
             sh """
-                echo ""
-                echo "════════════════════════════════════════════════════════"
-                echo "🤖  AI BUILD ERROR ANALYZER - Running..."
-                echo "════════════════════════════════════════════════════════"
-                BUILD_NUMBER=${env.BUILD_NUMBER} \
-                JOB_NAME=sample-pipeline \
-                CLAUDE_API_KEY=${env.CLAUDE_API_KEY} \
-                node /var/jenkins_home/analyze-build-error.js 2>&1 || \
-                echo "⚠️  AI analysis failed"
+                echo "================================================"
+                echo "AI BUILD ERROR ANALYZER - Running..."
+                echo "================================================"
+                BUILD_NUMBER=${env.BUILD_NUMBER} JOB_NAME=sample-pipeline CLAUDE_API_KEY=${env.CLAUDE_API_KEY} node /var/jenkins_home/analyze-build-error.js 2>&1 || echo "AI analysis failed"
             """
         }
     }
