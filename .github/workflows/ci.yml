@@ -1,0 +1,45 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'  # BUG: EOL version, should use 18 or 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: |
+          docker build -t sample-project .
+          # BUG: no docker login before push
+          docker push sample-project  # BUG: missing registry prefix and tag
+
+      - name: Deploy
+        # BUG: missing 'if' condition for deployment (should only deploy on main branch)
+        run: |
+          echo "Deploying..."
+          ssh user@server "docker pull sample-project && docker restart sample-project"
+          # BUG: no SSH key configured in secrets
+
+  lint:
+    runs-on: ubuntu-latest
+    # BUG: missing 'needs: build' dependency, lint runs in parallel unnecessarily
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm run lint  # BUG: lint script not defined in package.json
